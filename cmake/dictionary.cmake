@@ -9,6 +9,7 @@ add_custom_command(
 )
 
 add_custom_target(gen_pos_matcher_impl_inc DEPENDS "${pos_matcher_impl_inc}")
+install(FILES "${pos_matcher_impl_inc}" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/mozc/dictionary")
 
 # Generate pos_map.inc
 set(pos_map_inc "${PROJECT_BINARY_DIR}/dictionary/pos_map.inc")
@@ -28,16 +29,12 @@ set(MOZC_DICTIONARY_SRCS
     file/codec_factory.cc
     file/codec_util.cc
     file/dictionary_file.cc
-    file/dictionary_file_builder.cc
     single_kanji_dictionary.cc
     suffix_dictionary.cc
     suppression_dictionary.cc
     system/codec.cc
     system/system_dictionary.cc
-    system/system_dictionary_benchmark.cc
-    system/system_dictionary_builder.cc
     system/value_dictionary.cc
-    text_dictionary_loader.cc
     user_dictionary.cc
     user_dictionary_importer.cc
     user_dictionary_session.cc
@@ -47,12 +44,3 @@ set(MOZC_DICTIONARY_SRCS
     user_pos.cc
 )
 list(TRANSFORM MOZC_DICTIONARY_SRCS PREPEND "${MOZC_SRC_DIR}/dictionary/")
-
-add_library(mozc_dictionary OBJECT ${MOZC_DICTIONARY_SRCS})
-
-target_include_directories(mozc_dictionary PRIVATE
-    "${MOZC_SRC_DIR}"
-    "${MOZC_SRC_DIR}/third_party/abseil-cpp"
-    "${MOZC_SRC_DIR}/third_party/protobuf/src"
-    "${PROJECT_BINARY_DIR}"
-)

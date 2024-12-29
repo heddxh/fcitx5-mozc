@@ -3,6 +3,9 @@ if (NOT PROTOC_EXECUTABLE)
     add_executable(protoc "${MOZC_SRC_DIR}/protobuf/custom_protoc_main.cc")
     target_include_directories(protoc PRIVATE "${MOZC_SRC_DIR}/third_party/protobuf/src")
     target_link_libraries(protoc libprotoc)
+    if (APPLE)
+        install(TARGETS protoc DESTINATION "${CMAKE_INSTALL_BINDIR}") # iOS needs it.
+    endif()
     set(PROTOC_EXECUTABLE "${PROJECT_BINARY_DIR}/protoc")
 endif()
 
@@ -23,6 +26,7 @@ list(TRANSFORM PROTO_SRCS APPEND ".pb.cc" OUTPUT_VARIABLE GENERATED_PROTO_SRCS)
 list(TRANSFORM GENERATED_PROTO_SRCS PREPEND "${PROJECT_BINARY_DIR}/")
 
 foreach(PROTO_SRC ${PROTO_SRCS})
+    get_filename_component(PROTO_DIR ${PROTO_SRC} DIRECTORY)
     get_filename_component(PROTO_NAME ${PROTO_SRC} NAME)
     set(target_name "gen_${PROTO_NAME}_proto")
     set(proto_cc "${PROJECT_BINARY_DIR}/${PROTO_SRC}.pb.cc")
@@ -36,14 +40,9 @@ foreach(PROTO_SRC ${PROTO_SRCS})
         COMMENT "Generating ${PROTO_SRC}.pb.cc and ${PROTO_SRC}.pb.h"
     )
     add_custom_target(${target_name} DEPENDS "${proto_cc}" "${proto_h}")
-    add_dependencies(${target_name} protoc)
+    if (TARGET protoc)
+        add_dependencies(${target_name} protoc)
+    endif()
     add_dependencies(gen ${target_name})
+    install(FILES "${proto_h}" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/mozc/${PROTO_DIR}")
 endforeach()
-
-add_library(mozc_proto OBJECT ${GENERATED_PROTO_SRCS})
-target_include_directories(mozc_proto PRIVATE
-    "${PROJECT_BINARY_DIR}"
-    "${MOZC_SRC_DIR}"
-    "${MOZC_SRC_DIR}/third_party/protobuf/src"
-    "${MOZC_SRC_DIR}/third_party/abseil-cpp"
-)

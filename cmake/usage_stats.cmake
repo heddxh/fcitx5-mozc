@@ -15,15 +15,3 @@ set(MOZC_USAGE_STATS_SRCS
     usage_stats_uploader.cc
 )
 list(TRANSFORM MOZC_USAGE_STATS_SRCS PREPEND "${MOZC_SRC_DIR}/usage_stats/")
-
-add_library(mozc_usage_stats OBJECT
-    ${MOZC_USAGE_STATS_SRCS}
-    "${PROJECT_BINARY_DIR}/usage_stats/usage_stats.pb.cc"
-)
-
-target_include_directories(mozc_usage_stats PRIVATE
-    "${MOZC_SRC_DIR}"
-    "${MOZC_SRC_DIR}/third_party/abseil-cpp"
-    "${MOZC_SRC_DIR}/third_party/protobuf/src"
-    "${PROJECT_BINARY_DIR}"
-)
