@@ -9,12 +9,3 @@ set(MOZC_PREDICTION_SRCS
     user_history_predictor.cc
 )
 list(TRANSFORM MOZC_PREDICTION_SRCS PREPEND "${MOZC_SRC_DIR}/prediction/")
-
-add_library(mozc_prediction OBJECT ${MOZC_PREDICTION_SRCS})
-
-target_include_directories(mozc_prediction PRIVATE
-    "${MOZC_SRC_DIR}"
-    "${MOZC_SRC_DIR}/third_party/abseil-cpp"
-    "${MOZC_SRC_DIR}/third_party/protobuf/src"
-    "${PROJECT_BINARY_DIR}"
-)
