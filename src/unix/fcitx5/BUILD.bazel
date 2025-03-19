@@ -59,7 +59,8 @@ mozc_cc_library(
         "//base:singleton",
         "//base:vlog",
         "//config:config_handler",
-        "//engine:engine_factory",
+        "//data_manager/oss:oss_data_manager",
+        "//engine",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session:key_info_util",
@@ -79,7 +80,6 @@ mozc_cc_library(
     deps = [
         ":mozc_client_interface",
         "//client",
-        "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
     ],
