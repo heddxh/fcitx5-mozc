@@ -143,6 +143,11 @@ bool MozcDirectClient::CreateSession() {
   *input.mutable_capability() = client_capability_;
 
   input.mutable_request()->set_auto_partial_suggestion(true);
+  input.mutable_request()->set_auto_partial_suggestion(true);
+  input.mutable_request()->set_zero_query_suggestion(true);
+  input.mutable_request()->set_mixed_conversion(true);
+  input.mutable_request()->set_candidate_page_size(100);
+  input.mutable_request()->set_candidates_size_limit(100);
   
   mozc::commands::Output output;
   if (!Call(input, &output)) {
