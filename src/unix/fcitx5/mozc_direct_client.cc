@@ -142,6 +142,8 @@ bool MozcDirectClient::CreateSession() {
 
   *input.mutable_capability() = client_capability_;
 
+  input.mutable_request()->set_auto_partial_suggestion(true);
+  
   mozc::commands::Output output;
   if (!Call(input, &output)) {
     return false;
