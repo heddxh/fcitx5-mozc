@@ -53,8 +53,11 @@ MozcDirectClient::~MozcDirectClient() { DeleteSession(); }
 void MozcDirectClient::InitRequestForSvsJapanese(bool use_svs) {
   request_ = std::make_unique<mozc::commands::Request>();
 
-#ifdef FCITX5_MOZC_CANDIDATE_PAGE_SIZE
-  request_->set_candidate_page_size(FCITX5_MOZC_CANDIDATE_PAGE_SIZE);
+#ifdef FCITX5_MOZC_MOBILE_CANDIDATES
+  // Mobile keyboards need rich conversion candidates while the user is still
+  // composing, instead of desktop-style suggestions followed by conversion.
+  request_->set_mixed_conversion(true);
+  request_->set_auto_partial_suggestion(true);
 #endif
 
   mozc::commands::DecoderExperimentParams params;
