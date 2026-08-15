@@ -53,6 +53,10 @@ MozcDirectClient::~MozcDirectClient() { DeleteSession(); }
 void MozcDirectClient::InitRequestForSvsJapanese(bool use_svs) {
   request_ = std::make_unique<mozc::commands::Request>();
 
+#ifdef FCITX5_MOZC_CANDIDATE_PAGE_SIZE
+  request_->set_candidate_page_size(FCITX5_MOZC_CANDIDATE_PAGE_SIZE);
+#endif
+
   mozc::commands::DecoderExperimentParams params;
   uint32_t variation_types = params.variation_character_types();
   if (use_svs) {
