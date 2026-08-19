@@ -155,7 +155,11 @@ bool MozcState::TrySendClick(int32_t unique_id, mozc::commands::Output* out,
   DCHECK(out_error);
 
   mozc::commands::SessionCommand command;
+#ifdef FCITX5_MOZC_MOBILE_CANDIDATES
+  command.set_type(mozc::commands::SessionCommand::SUBMIT_CANDIDATE);
+#else
   command.set_type(mozc::commands::SessionCommand::SELECT_CANDIDATE);
+#endif
   command.set_id(unique_id);
   return TrySendRawCommand(command, out, out_error);
 }
