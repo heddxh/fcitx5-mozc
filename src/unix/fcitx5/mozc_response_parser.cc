@@ -79,6 +79,27 @@ std::string CreateDescriptionString(const std::string& description) {
   return " [" + description + "]";
 }
 
+std::string FormatCandidateValue(const std::string& value,
+                                 const mozc::commands::Annotation* annotation,
+                                 bool use_annotation) {
+  if (!use_annotation || annotation == nullptr) {
+    return value;
+  }
+
+  std::string result;
+  if (annotation->has_prefix()) {
+    result = annotation->prefix();
+  }
+  result += value;
+  if (annotation->has_suffix()) {
+    result += annotation->suffix();
+  }
+  if (annotation->has_description()) {
+    result += CreateDescriptionString(annotation->description());
+  }
+  return result;
+}
+
 class MozcCandidateWord final : public CandidateWord {
  public:
   MozcCandidateWord(int id, std::string text, MozcEngine* engine)
@@ -95,13 +116,29 @@ class MozcCandidateWord final : public CandidateWord {
 };
 
 class MozcCandidateList final : public CandidateList,
-                                public PageableCandidateList {
+                                public PageableCandidateList,
+                                public BulkCandidateList {
  public:
   MozcCandidateList(const mozc::commands::CandidateWindow& candidates,
+                    const mozc::commands::CandidateList* all_candidates,
                     InputContext* ic, MozcEngine* engine, bool use_annotation)
       : ic_(ic), engine_(engine) {
     auto* state = engine_->mozcState(ic);
     setPageable(this);
+    if (all_candidates != nullptr) {
+      setBulk(this);
+      allCandidateWords_.reserve(all_candidates->candidates_size());
+      for (const auto& candidate : all_candidates->candidates()) {
+        const int32_t id =
+            candidate.has_id() ? candidate.id() : kBadCandidateId;
+        const auto* annotation =
+            candidate.has_annotation() ? &candidate.annotation() : nullptr;
+        allCandidateWords_.emplace_back(std::make_unique<MozcCandidateWord>(
+            id,
+            FormatCandidateValue(candidate.value(), annotation, use_annotation),
+            engine));
+      }
+    }
     bool index_visible = false;
     if (candidates.has_footer()) {
       const auto& footer = candidates.footer();
@@ -149,22 +186,10 @@ class MozcCandidateList final : public CandidateList,
           candidates.candidate(i);
       const uint32_t index = candidate.index();
 
-      std::string value;
-      if (use_annotation && candidate.has_annotation() &&
-          candidate.annotation().has_prefix()) {
-        value = candidate.annotation().prefix();
-      }
-      value += candidate.value();
-      if (use_annotation && candidate.has_annotation() &&
-          candidate.annotation().has_suffix()) {
-        value += candidate.annotation().suffix();
-      }
-      if (use_annotation && candidate.has_annotation() &&
-          candidate.annotation().has_description()) {
-        // Display descriptions ([HALF][KATAKANA], [GREEK], [Black square],
-        // etc).
-        value += CreateDescriptionString(candidate.annotation().description());
-      }
+      const auto* annotation =
+          candidate.has_annotation() ? &candidate.annotation() : nullptr;
+      std::string value =
+          FormatCandidateValue(candidate.value(), annotation, use_annotation);
 
       const bool is_current =
           candidates.has_focused_index() && index == focused_index;
@@ -240,9 +265,20 @@ class MozcCandidateList final : public CandidateList,
 
   bool usedNextBefore() const override { return true; }
 
+  const CandidateWord& candidateFromAll(int idx) const override {
+    if (idx < 0 || idx >= totalSize()) {
+      throw std::invalid_argument("invalid index");
+    }
+    return *allCandidateWords_[idx];
+  }
+
+  int totalSize() const override {
+    return static_cast<int>(allCandidateWords_.size());
+  }
+
  private:
   void checkIndex(int idx) const {
-    if (idx < 0 && idx >= size()) {
+    if (idx < 0 || idx >= size()) {
       throw std::invalid_argument("invalid index");
     }
   }
@@ -255,6 +291,7 @@ class MozcCandidateList final : public CandidateList,
   CandidateLayoutHint layout_ = CandidateLayoutHint::Vertical;
   int cursor_ = -1;
   std::vector<std::unique_ptr<CandidateWord>> candidateWords_;
+  std::vector<std::unique_ptr<CandidateWord>> allCandidateWords_;
 };
 
 }  // namespace
@@ -395,7 +432,10 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output& response,
   if (response.has_candidate_window()) {
     const mozc::commands::CandidateWindow& candidates =
         response.candidate_window();
-    ParseCandidates(candidates, ic);
+    const mozc::commands::CandidateList* all_candidates =
+        response.has_all_candidate_words() ? &response.all_candidate_words()
+                                           : nullptr;
+    ParseCandidates(candidates, all_candidates, ic);
   }
 
   if (response.has_url()) {
@@ -424,7 +464,9 @@ void MozcResponseParser::ParseResult(const mozc::commands::Result& result,
 }
 
 void MozcResponseParser::ParseCandidates(
-    const mozc::commands::CandidateWindow& candidates, InputContext* ic) const {
+    const mozc::commands::CandidateWindow& candidates,
+    const mozc::commands::CandidateList* all_candidates,
+    InputContext* ic) const {
   auto* mozc_state = engine_->mozcState(ic);
   const mozc::commands::Footer& footer = candidates.footer();
   if (candidates.has_footer()) {
@@ -452,7 +494,8 @@ void MozcResponseParser::ParseCandidates(
   }
 
   ic->inputPanel().setCandidateList(std::make_unique<MozcCandidateList>(
-      candidates, ic, engine_, *engine_->config().verticalList));
+      candidates, all_candidates, ic, engine_,
+      *engine_->config().verticalList));
 }
 
 void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit& preedit,

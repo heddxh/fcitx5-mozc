@@ -66,6 +66,7 @@ class MozcResponseParser {
   void ParseResult(const mozc::commands::Result& result,
                    InputContext* ic) const;
   void ParseCandidates(const mozc::commands::CandidateWindow& candidates,
+                       const mozc::commands::CandidateList* all_candidates,
                        InputContext* ic) const;
   void ParsePreedit(const mozc::commands::Preedit& preedit, uint32_t position,
                     InputContext* ic) const;
