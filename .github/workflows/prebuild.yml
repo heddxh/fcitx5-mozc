@@ -30,17 +30,31 @@ jobs:
         run: |
           chown -R builduser:builduser .
           sudo -u builduser bazel build --config oss_linux --host_cxxopt=-Wno-uninitialized //data_manager/oss:mozc_data.inc
+          mkdir -p ../../build/release
+          cp bazel-bin/data_manager/oss/mozc_data.inc ../../build/release/mozc_data.inc
+          cp bazel-bin/data_manager/oss/mozc.data ../../build/release/mozc.data
+
+      - name: Build UT data
+        env:
+          BAZEL_USER: builduser
+        run: .github/mozc-ut/build-data.sh
+
+      - name: Prepare UT release assets
+        run: |
+          cp build/mozc-ut/mozc_data.inc build/release/mozc_ut_data.inc
+          cp build/mozc-ut/mozc.data build/release/mozc_ut.data
+          cp build/mozc-ut/mozc-ut-data.txt build/release/mozc-ut-data.txt
 
       - name: Release data
-        uses: 'marvinpinto/action-automatic-releases@latest'
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: latest
+          tag: latest
+          commit: ${{ github.sha }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
           prerelease: true
-          title: "Nightly Build"
-          files: |
-            mozc/src/bazel-bin/data_manager/oss/mozc_data.inc
-            mozc/src/bazel-bin/data_manager/oss/mozc.data
+          name: Nightly Build
+          artifacts: build/release/*
 
       - name: Setup tmate session
         if: ${{ failure() }}
