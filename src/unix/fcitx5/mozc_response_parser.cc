@@ -467,6 +467,7 @@ void MozcResponseParser::ParseCandidates(
     const mozc::commands::CandidateWindow& candidates,
     const mozc::commands::CandidateList* all_candidates,
     InputContext* ic) const {
+#ifndef FCITX5_MOZC_MOBILE_CANDIDATES
   auto* mozc_state = engine_->mozcState(ic);
   const mozc::commands::Footer& footer = candidates.footer();
   if (candidates.has_footer()) {
@@ -492,6 +493,7 @@ void MozcResponseParser::ParseCandidates(
     }
     mozc_state->SetAuxString(auxString);
   }
+#endif
 
   ic->inputPanel().setCandidateList(std::make_unique<MozcCandidateList>(
       candidates, all_candidates, ic, engine_,
