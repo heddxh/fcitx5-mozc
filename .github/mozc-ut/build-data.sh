@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-readonly ROOT_DIR="$(git rev-parse --show-toplevel)"
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly ROOT_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 readonly MOZC_DIR="${ROOT_DIR}/mozc"
 readonly DICTIONARY_DIR="${MOZC_DIR}/src/data/dictionary_oss"
 readonly OUTPUT_DIR="${ROOT_DIR}/build/mozc-ut"
@@ -16,14 +17,10 @@ if [[ ! -f "${MOZC_DIR}/src/BUILD.bazel" ]]; then
     exit 1
 fi
 
-if ! git -C "${MOZC_DIR}" diff --quiet -- src/data/dictionary_oss/dictionary00.txt; then
-    echo "dictionary00.txt has local changes; refusing to overwrite them." >&2
-    exit 1
-fi
-
 WORK_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/mozc-ut.XXXXXXXX")"
+cp "${DICTIONARY_DIR}/dictionary00.txt" "${WORK_DIR}/dictionary00.txt"
 cleanup() {
-    git -C "${MOZC_DIR}" checkout -- src/data/dictionary_oss/dictionary00.txt
+    cp "${WORK_DIR}/dictionary00.txt" "${DICTIONARY_DIR}/dictionary00.txt"
     rm -rf "${WORK_DIR}"
 }
 trap cleanup EXIT
