@@ -24,6 +24,9 @@
 #include <fcitx-utils/log.h>
 #include <fcitx-utils/macros.h>
 #include <fcitx-utils/semver.h>
+#ifdef __ANDROID__
+#include <fcitx-utils/standardpaths.h>
+#endif
 #include <fcitx-utils/stringutils.h>
 #include <fcitx/action.h>
 #include <fcitx/addoninstance.h>
@@ -42,6 +45,9 @@
 
 #include "base/init_mozc.h"
 #include "base/process.h"
+#ifdef __ANDROID__
+#include "base/system_util.h"
+#endif
 #include "protocol/commands.pb.h"
 #include "unix/fcitx5/i18nwrapper.h"
 #include "unix/fcitx5/mozc_client_interface.h"
@@ -130,6 +136,11 @@ static_assert(mozc::commands::NUM_OF_COMPOSITIONS == kNumCompositionModes,
               "number of modes must match");
 
 Instance* Init(Instance* instance) {
+#ifdef __ANDROID__
+  const auto profile_directory =
+      StandardPaths::global().userDirectory(StandardPathsType::Config) / "mozc";
+  mozc::SystemUtil::SetUserProfileDirectory(profile_directory.string());
+#endif
   int argc = 1;
   char argv0[] = "fcitx_mozc";
   char* _argv[] = {argv0};
