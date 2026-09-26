@@ -21,6 +21,9 @@
 
 #include <fcitx-config/iniparser.h>
 #include <fcitx-config/rawconfig.h>
+#ifdef __ANDROID__
+#include <fcitx-utils/fs.h>
+#endif
 #include <fcitx-utils/log.h>
 #include <fcitx-utils/macros.h>
 #include <fcitx-utils/semver.h>
@@ -139,6 +142,7 @@ Instance* Init(Instance* instance) {
 #ifdef __ANDROID__
   const auto profile_directory =
       StandardPaths::global().userDirectory(StandardPathsType::Config) / "mozc";
+  fs::makePath(profile_directory);
   mozc::SystemUtil::SetUserProfileDirectory(profile_directory.string());
 #endif
   int argc = 1;
